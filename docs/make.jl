@@ -17,6 +17,6 @@ makedocs(
 )
 
 deploydocs(
-  repo = "github.com/shipengcheng1230/GeoGreensFunctions.jl.git",
+  repo = "github.com/shipengcheng1230/GeoGreensFunctions.git",
   target = "build",
 )
