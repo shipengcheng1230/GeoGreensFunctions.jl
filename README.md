@@ -2,29 +2,29 @@
 
 Commonly used Green's function in geoscience.
 
-- [Line (2 nodes) antiplane dislocation]
+- [Line (2 nodes) antiplane dislocation](https://press.princeton.edu/books/ebook/9781400833856/earthquake-and-volcano-deformation)
 
-- [Line (2 nodes) inplane dislocation]
+- [Line (2 nodes) inplane dislocation](https://press.princeton.edu/books/ebook/9781400833856/earthquake-and-volcano-deformation) (check [errata](https://cdfm.stanford.edu/sites/g/files/sbiybj14411/f/errata_0.pdf))
 
-- [Rectangular (4 nodes) dislocation (limited rotational freedom)]
+- [Rectangular (4 nodes) dislocation (limited rotational freedom)](https://www.bosai.go.jp/e/dc3d.html)
 
-- [Triangular (3 nodes) dislocation (singularity avoided)]
+- [Triangular (3 nodes) dislocation (singularity avoided)](http://volcanodeformation.com/software.html)
 
-- [Rectangular (4 nodes) dislocation (fully rotational freedom)]
+- [Rectangular (4 nodes) dislocation (fully rotational freedom)](http://volcanodeformation.com/software.html)
 
-- [Rectangular (4 nodes) antiplane strain]
+- [Rectangular (4 nodes) antiplane strain](https://bitbucket.org/sbarbot/bssa-2016237/src/master/matlab/computeDisplacementAntiplaneDippingShearZone.m)
 
-- [Rectangular (4 nodes) inplane strain]
+- [Rectangular (4 nodes) inplane strain](https://bitbucket.org/sbarbot/bssa-2016237/src/master/matlab/computeDisplacementPlaneStrainShearZone.m)
 
-- [Triangular (3 nodes) antiplane strain]
+- [Triangular (3 nodes) antiplane strain](https://bitbucket.org/sbarbot/bssa-2018058/src/default/matlab/computeDisplacementAntiplaneTriangleShearZone.m)
 
-- [Triangular (3 nodes) inplane strain]
+- [Triangular (3 nodes) inplane strain](https://bitbucket.org/sbarbot/bssa-2018058/src/default/matlab/computeDisplacementPlaneStrainTriangleShearZone.m)
 
-- [Hexahedron (8 nodes) volume strain]
+- [Hexahedron (8 nodes) volume strain](https://bitbucket.org/sbarbot/bssa-2016237/src/master/matlab/computeDisplacementVerticalShearZone.m)
 
-- [Tetrahedron (4 nodes) volume strain]
+- [Tetrahedron (4 nodes) volume strain](https://bitbucket.org/sbarbot/bssa-2018058/src/default/matlab/computeDisplacementTetrahedronShearZoneGauss.m)
 
-All functions are translated from respective original sources (Matlab, Fortran, etc.), being validated,
+All functions are translated from respective original sources (Matlab, Fortran, etc.), being tested and cross-validated,
 pertaining all original parameter names and coordinate system. A transform to the ENU
 (x -> east, y -> north, z -> upward) coordinate is provided if necessary. All methods here are type stable.
 Please make a PR if you see anything is wrong or can be improved (^.^)!
