@@ -4,13 +4,13 @@ Commonly used Green's function in geoscience.
 
 - [Line (2 nodes) antiplane dislocation](https://press.princeton.edu/books/ebook/9781400833856/earthquake-and-volcano-deformation)
 
-- [Line (2 nodes) inplane dislocation](https://press.princeton.edu/books/ebook/9781400833856/earthquake-and-volcano-deformation) (check [errata](https://cdfm.stanford.edu/sites/g/files/sbiybj14411/f/errata_0.pdf))
+- [Line (2 nodes) inplane dislocation](https://press.princeton.edu/books/ebook/9781400833856/earthquake-and-volcano-deformation) (check [Errata](https://cdfm.stanford.edu/sites/g/files/sbiybj14411/f/errata_0.pdf))
 
-- [Rectangular (4 nodes) dislocation (limited rotational freedom)](https://www.bosai.go.jp/e/dc3d.html)
+- [Rectangular (4 nodes) dislocation](https://www.bosai.go.jp/e/dc3d.html) (limited rotational freedom)
 
-- [Triangular (3 nodes) dislocation (singularity avoided)](http://volcanodeformation.com/software.html)
+- [Triangular (3 nodes) dislocation](http://volcanodeformation.com/software.html) (singularity avoided)
 
-- [Rectangular (4 nodes) dislocation (fully rotational freedom)](http://volcanodeformation.com/software.html)
+- [Rectangular (4 nodes) dislocation](http://volcanodeformation.com/software.html) (fully rotational freedom)
 
 - [Rectangular (4 nodes) antiplane strain](https://bitbucket.org/sbarbot/bssa-2016237/src/master/matlab/computeDisplacementAntiplaneDippingShearZone.m)
 

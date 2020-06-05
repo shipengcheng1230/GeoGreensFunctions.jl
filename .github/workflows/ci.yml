@@ -32,4 +32,4 @@ jobs:
           JULIA_NUM_THREADS: 4
       - uses: julia-actions/julia-uploadcodecov@latest
         env:
-          # CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
