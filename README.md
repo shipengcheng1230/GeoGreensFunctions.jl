@@ -1,5 +1,10 @@
 # GeoGreensFunction
 
+[![CI](https://github.com/shipengcheng1230/GeoGreensFunctions.jl/workflows/CI/badge.svg)](https://github.com/shipengcheng1230/GeoGreensFunctions.jl/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/shipengcheng1230/GeoGreensFunctions.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/shipengcheng1230/GeoGreensFunctions.jl)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://shipengcheng1230.github.io/GeoGreensFunctions.jl/stable)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://shipengcheng1230.github.io/GeoGreensFunctions.jl/dev/)
+
 Commonly used Green's function in geoscience.
 
 - [Line (2 nodes) antiplane dislocation](https://press.princeton.edu/books/ebook/9781400833856/earthquake-and-volcano-deformation)
