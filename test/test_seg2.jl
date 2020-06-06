@@ -4,7 +4,7 @@ using Test
     u1 = dc3d(0.0, -1.0, -1.0, 2/3, 0.0, 90.0, [-1e4, 1e4], [-4.0, -3.0], [1.0, 0.0, 0.0])
     u2 = disp_antiplane_seg2(1.0, -1.0, 0.0, 4.0, 3.0, 1.0)
     @test u1[1] ≈ u2 atol=1e-6 # strike displacement
-    G = rand()*100
+    G = 2.0
     σxy1 = G * (u1[5] + u1[7])
     σxz1 = G * (u1[6] + u1[10])
     σxy2, σxz2 = stress_antiplane_seg2(1.0, -1.0, 0.0, 4.0, 3.0, G, 1.0)
@@ -13,9 +13,9 @@ using Test
 end
 
 @testset "Inplane line dislocation" begin
-    θ = rand()*90
-    G = rand()
-    λ = rand()
+    θ = 33.0
+    G = 2.0
+    λ = 4.0
     α = (λ + G) / (λ + 2G)
     ν = λ / 2 / (λ + G)
     uo = dc3d(0.0, -1.0, -1.0, α, 0.0, θ, [-1e5, 1e5], [-4.0, -3.0], [0.0, 1.0, 0.0])
