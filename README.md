@@ -24,13 +24,6 @@ Commonly used Green's function in geoscience.
 
 - [Tetrahedron (4 nodes) volume strain](https://bitbucket.org/sbarbot/bssa-2018058/src/default/matlab/computeDisplacementTetrahedronShearZoneGauss.m)
 
-All functions are translated from respective original sources (Matlab, Fortran, etc.), being tested and cross-validated,
-pertaining all original parameter names and coordinate system. A transform to the ENU
-(x -> east, y -> north, z -> upward) coordinate is provided if necessary. All methods here are type stable.
-Please make a PR if you see anything is wrong or can be improved (^.^)!
-
-*Some of them hasn't been implemented yet.*
-
 ## Reference
 
 Okada, Y. (1992). Internal deformation due to shear and tensile faults in a half-space. Bulletin of the Seismological Society of America, 82(2), 1018–1040.
