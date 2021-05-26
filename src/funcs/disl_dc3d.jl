@@ -125,6 +125,8 @@
 
 export dc3d
 
+dc3d_cache(T) = ntuple(x -> zeros(T, 12), Val(10))
+
 """
     dc3d(x::T, y::T, z::T, α::T, dep::T, dip::T,
         al::Union{A, SubArray}, aw::Union{A, SubArray}, disl::A
@@ -151,25 +153,30 @@ A vector of 12 numbers, each is ``u_{x}``, ``u_{y}``, ``u_{z}``, ``u_{x,x}``,
     ``u_{y,x}``, ``u_{z,x}``, ``u_{x,y}``, ``u_{y,y}``, ``u_{z,y}``, ``u_{x,z}``
     ``u_{y,z}``, ``u_{z,z}``.
 """
-function dc3d(x::T, y::T, z::T, α::T, dep::T, dip::T, al::A, aw::A, disl::AbstractVector{<:Real}) where {T<:Real, A<:AbstractVecOrMat{<:Real}}
+function dc3d(x::T, y::T, z::T, α::T, dep::T, dip::T, al::A, aw::A, disl::AbstractVector{<:Real},
+    cache=dc3d_cache(T)) where {T <: Real,A <: AbstractVecOrMat{<:Real}}
 
-    z > zero(T) && return zeros(T, 12)
+    u, du, dua, dub, duc, zerosol, xi, et, kxi, ket = cache
+    fill!(u, zero(T))
+    fill!(kxi, zero(T))
+    fill!(ket, zero(T))
 
-    u, du, dua, dub, duc = [zeros(T, 12) for _ in 1: 5]
+    z > zero(T) && return zerosol
 
-    xi = x .- al
+    xi[1] = x - al[1]
+    xi[2] = x - al[2]
     d = dep + z
     sc1 = shared_constants_1(α, dip)
     sd, cd = sc1[6], sc1[7]
     p = y * cd + d * sd
     q = y * sd - d * cd
-    et = p .- aw
+    et[1] = p - aw[1]
+    et[2] = p - aw[2]
 
     if q ≈ zero(T) && ((xi[1] * xi[2] ≤ zero(T) && et[1] * et[2] ≈ zero(T)) ||	(et[1] * et[2] ≤ zero(T) && xi[1] * xi[2] ≈ zero(T)))
-        return zeros(T, 12)
+        return zerosol
     end
 
-    kxi, ket = [zeros(T, 2) for _ in 1: 2]
     r12 = hypot(xi[1], et[2], q)
     r21 = hypot(xi[2], et[1], q)
     r22 = hypot(xi[2], et[2], q)
@@ -179,19 +186,19 @@ function dc3d(x::T, y::T, z::T, α::T, dep::T, dip::T, al::A, aw::A, disl::Abstr
     (et[1] ≤ zero(T) && (r12 + et[2]) ≈ zero(T)) && (ket[1] = one(T))
     (et[1] ≤ zero(T) && (r22 + et[2]) ≈ zero(T)) && (ket[2] = one(T))
 
-    for k = 1: 2, j = 1: 2
+    for k in 1:2, j in 1:2
         sc2 = shared_constants_2(xi[j], et[k], q, sd, cd, kxi[k], ket[j])
-        dua = ua(sc1, sc2, xi[j], et[k], q, disl)
-        for i = 1: 3: 10
+        ua(dua, sc1, sc2, xi[j], et[k], q, disl)
+        for i = 1:3:10
             du[i] = -dua[i]
-            du[i+1] = -dua[i+1] * cd + dua[i+2] * sd
-            du[i+2] = -dua[i+1] * sd - dua[i+2] * cd
+            du[i + 1] = -dua[i + 1] * cd + dua[i + 2] * sd
+            du[i + 2] = -dua[i + 1] * sd - dua[i + 2] * cd
             i < 10 && continue
             du[i] = -du[i]
-            du[i+1] = -du[i+1]
-            du[i+2] = -du[i+2]
+            du[i + 1] = -du[i + 1]
+            du[i + 2] = -du[i + 2]
         end
-        for i = 1: 12
+        for i = 1:12
             if j + k ≠ 3  u[i] += du[i] end
             if j + k == 3  u[i] -= du[i] end
         end
@@ -200,13 +207,15 @@ function dc3d(x::T, y::T, z::T, α::T, dep::T, dip::T, al::A, aw::A, disl::Abstr
     d = dep - z
     p = y * cd + d * sd
     q = y * sd - d * cd
-    et = p .- aw
+    et[1] = p - aw[1]
+    et[2] = p - aw[2]
 
     if q ≈ zero(T) && ((xi[1] * xi[2] ≤ zero(T) && et[1] * et[2] ≈ zero(T)) ||	(et[1] * et[2] ≤ zero(T) && xi[1] * xi[2] ≈ zero(T)))
-        return zeros(T, 12)
+        return zerosol
     end
 
-    kxi, ket = [zeros(T, 2) for _ in 1: 2]
+    fill!(kxi, zero(T))
+    fill!(ket, zero(T))
     r12 = hypot(xi[1], et[2], q)
     r21 = hypot(xi[2], et[1], q)
     r22 = hypot(xi[2], et[2], q)
@@ -216,21 +225,21 @@ function dc3d(x::T, y::T, z::T, α::T, dep::T, dip::T, al::A, aw::A, disl::Abstr
     (et[1] ≤ zero(T) && (r12 + et[2]) ≈ zero(T)) && (ket[1] = one(T))
     (et[1] ≤ zero(T) && (r22 + et[2]) ≈ zero(T)) && (ket[2] = one(T))
 
-    for k = 1: 2, j = 1: 2
+    for k in 1:2, j in 1:2
         sc2 = shared_constants_2(xi[j], et[k], q, sd, cd, kxi[k], ket[j])
-        dua = ua(sc1, sc2, xi[j], et[k], q, disl)
-        dub = ub(sc1, sc2, xi[j], et[k], q, disl)
-        duc = uc(sc1, sc2, xi[j], et[k], q, z,  disl)
-        for i = 1: 3: 10
+        ua(dua, sc1, sc2, xi[j], et[k], q, disl)
+        ub(dub, sc1, sc2, xi[j], et[k], q, disl)
+        uc(duc, sc1, sc2, xi[j], et[k], q, z, disl)
+        for i = 1:3:10
             du[i] = dua[i] + dub[i] + z * duc[i]
-            du[i+1] = (dua[i+1] + dub[i+1] + z * duc[i+1]) * cd - (dua[i+2] + dub[i+2] + z * duc[i+2]) * sd
-            du[i+2] = (dua[i+1] + dub[i+1] - z * duc[i+1]) * sd + (dua[i+2] + dub[i+2] - z * duc[i+2]) * cd
+            du[i + 1] = (dua[i + 1] + dub[i + 1] + z * duc[i + 1]) * cd - (dua[i + 2] + dub[i + 2] + z * duc[i + 2]) * sd
+            du[i + 2] = (dua[i + 1] + dub[i + 1] - z * duc[i + 1]) * sd + (dua[i + 2] + dub[i + 2] - z * duc[i + 2]) * cd
             i < 10 && continue
             du[10] += duc[1]
             du[11] += duc[2] * cd - duc[3] * sd
             du[12] -= duc[2] * sd + duc[3] * cd
         end
-        for i = 1: 12
+        for i = 1:12
             j + k ≠ 3 && (u[i] += du[i])
             j + k == 3 && (u[i] -= du[i])
         end
@@ -238,74 +247,65 @@ function dc3d(x::T, y::T, z::T, α::T, dep::T, dip::T, al::A, aw::A, disl::Abstr
     return u
 end
 
-function ua(sc1::B1, sc2::B2, xi::T, et::T, q::T, disl::A
-    ) where {T <: Number, A <: AbstractArray{T}, B1 <: NTuple{12, T}, B2 <: NTuple{24, T}}
+@inline function ua(u::A, sc1::B1, sc2::B2, xi::T, et::T, q::T, disl::A
+    ) where {T <: Number,A <: AbstractArray{T},B1 <: NTuple{12,T},B2 <: NTuple{24,T}}
     alp1, alp2, alp3, alp4, alp5, sd, cd, sdsd, cdcd, sdcd, s2d, sc2d = sc1
     xi2, et2, q2, r, r2, r3, r5, y, d, tt, alx, ale, x11, y11, x32, y32, ey, ez, fy, fz, gy, gz, hy, hz = sc2
 
-    u, du = zeros(T, 12), zeros(T, 12)
-
+    fill!(u, zero(T))
     xy = xi * y11
     qx = q * x11
     qy = q * y11
 
-    if disl[1] ≉ zero(T)
-        du[1] = tt / 2 + alp2 * xi * qy
-        du[2] = alp2 * q / r
-        du[3] = alp1 * ale - alp2 * q * qy
-        du[4] = -alp1 * qy - alp2 * xi2 * q * y32
-        du[5] = -alp2 * xi * q / r3
-        du[6] = alp1 * xy + alp2 * xi * q2 * y32
-        du[7] = alp1 * xy * sd + alp2 * xi * fy + d / 2 * x11
-        du[8] = alp2 * ey
-        du[9] = alp1 * (cd / r + qy * sd) - alp2 * q * fy
-        du[10] = alp1 * xy * cd + alp2 * xi * fz + y / 2 * x11
-        du[11] = alp2 * ez
-        du[12] = -alp1 * (sd / r - qy * cd) - alp2 * q * fz
-        u .+= disl[1] / 2π * du
-    end
+    coeff = disl[1] / 2π
+    u[1]  += coeff * (tt / 2 + alp2 * xi * qy)
+    u[2]  += coeff * (alp2 * q / r)
+    u[3]  += coeff * (alp1 * ale - alp2 * q * qy)
+    u[4]  += coeff * (-alp1 * qy - alp2 * xi2 * q * y32)
+    u[5]  += coeff * (-alp2 * xi * q / r3)
+    u[6]  += coeff * (alp1 * xy + alp2 * xi * q2 * y32)
+    u[7]  += coeff * (alp1 * xy * sd + alp2 * xi * fy + d / 2 * x11)
+    u[8]  += coeff * (alp2 * ey)
+    u[9]  += coeff * (alp1 * (cd / r + qy * sd) - alp2 * q * fy)
+    u[10] += coeff * (alp1 * xy * cd + alp2 * xi * fz + y / 2 * x11)
+    u[11] += coeff * (alp2 * ez)
+    u[12] += coeff * (-alp1 * (sd / r - qy * cd) - alp2 * q * fz)
 
-    if disl[2] ≉ zero(T)
-        du[1] = alp2 * q / r
-        du[2] = tt / 2 + alp2 * et * qx
-        du[3] = alp1 * alx - alp2 * q * qx
-        du[4] = -alp2 * xi * q / r3
-        du[5] = -qy / 2 - alp2 * et * q / r3
-        du[6] = alp1 / r + alp2 * q2 / r3
-        du[7] = alp2 * ey
-        du[8] = alp1 * d * x11 + xy / 2 * sd + alp2 * et * gy
-        du[9] = alp1 * y * x11 - alp2 * q * gy
-        du[10] = alp2 * ez
-        du[11] = alp1 * y * x11 + xy / 2 * cd + alp2 * et * gz
-        du[12] = -alp1 * d * x11 - alp2 * q * gz
-        u .+= disl[2] / 2π * du
-    end
+    coeff = disl[2] / 2π
+    u[1]  += coeff * (alp2 * q / r)
+    u[2]  += coeff * (tt / 2 + alp2 * et * qx)
+    u[3]  += coeff * (alp1 * alx - alp2 * q * qx)
+    u[4]  += coeff * (-alp2 * xi * q / r3)
+    u[5]  += coeff * (-qy / 2 - alp2 * et * q / r3)
+    u[6]  += coeff * (alp1 / r + alp2 * q2 / r3)
+    u[7]  += coeff * (alp2 * ey)
+    u[8]  += coeff * (alp1 * d * x11 + xy / 2 * sd + alp2 * et * gy)
+    u[9]  += coeff * (alp1 * y * x11 - alp2 * q * gy)
+    u[10] += coeff * (alp2 * ez)
+    u[11] += coeff * (alp1 * y * x11 + xy / 2 * cd + alp2 * et * gz)
+    u[12] += coeff * (-alp1 * d * x11 - alp2 * q * gz)
 
-    if disl[3] ≉ zero(T)
-        du[1] = -alp1 * ale - alp2 * q * qy
-        du[2] = -alp1 * alx - alp2 * q * qx
-        du[3] = tt / 2 - alp2 * (et * qx + xi * qy)
-        du[4] = -alp1 * xy + alp2 * xi * q2 * y32
-        du[5] = -alp1 / r + alp2 * q2 / r3
-        du[6] = -alp1 * qy - alp2 * q * q2 * y32
-        du[7] = -alp1 * (cd / r + qy * sd) - alp2 * q * fy
-        du[8] = -alp1 * y * x11 - alp2 * q * gy
-        du[9] = alp1 * (d * x11 + xy * sd) + alp2 * q * hy
-        du[10] = alp1 * (sd / r - qy * cd) - alp2 * q * fz
-        du[11] = alp1 * d * x11 - alp2 * q * gz
-        du[12] = alp1 * (y * x11 + xy * cd) + alp2 * q * hz
-        u .+= disl[3] / 2π * du
-    end
-    return u
+    coeff = disl[3] / 2π
+    u[1]  += coeff * (-alp1 * ale - alp2 * q * qy)
+    u[2]  += coeff * (-alp1 * alx - alp2 * q * qx)
+    u[3]  += coeff * (tt / 2 - alp2 * (et * qx + xi * qy))
+    u[4]  += coeff * (-alp1 * xy + alp2 * xi * q2 * y32)
+    u[5]  += coeff * (-alp1 / r + alp2 * q2 / r3)
+    u[6]  += coeff * (-alp1 * qy - alp2 * q * q2 * y32)
+    u[7]  += coeff * (-alp1 * (cd / r + qy * sd) - alp2 * q * fy)
+    u[8]  += coeff * (-alp1 * y * x11 - alp2 * q * gy)
+    u[9]  += coeff * (alp1 * (d * x11 + xy * sd) + alp2 * q * hy)
+    u[10] += coeff * (alp1 * (sd / r - qy * cd) - alp2 * q * fz)
+    u[11] += coeff * (alp1 * d * x11 - alp2 * q * gz)
+    u[12] += coeff * (alp1 * (y * x11 + xy * cd) + alp2 * q * hz)
 end
 
-function ub(sc1::B1, sc2::B2, xi::T, et::T, q::T, disl::A
-    ) where {T <: Number, A <: AbstractArray{T}, B1 <: NTuple{12, T}, B2 <: NTuple{24, T}}
+@inline function ub(u::A, sc1::B1, sc2::B2, xi::T, et::T, q::T, disl::A
+    ) where {T <: Number,A <: AbstractArray{T},B1 <: NTuple{12,T},B2 <: NTuple{24,T}}
     alp1, alp2, alp3, alp4, alp5, sd, cd, sdsd, cdcd, sdcd, s2d, sc2d = sc1
     xi2, et2, q2, r, r2, r3, r5, y, d, tt, alx, ale, x11, y11, x32, y32, ey, ez, fy, fz, gy, gz, hy, hz = sc2
 
-    u, du = zeros(T, 12), zeros(T, 12)
-
+    fill!(u, zero(T))
     rd = r + d
     d11 = one(T) / (r * rd)
     aj2 = xi * y / rd * d11
@@ -343,64 +343,56 @@ function ub(sc1::B1, sc2::B2, xi::T, et::T, q::T, disl::A
     qx = q * x11
     qy = q * y11
 
-    if disl[1] ≉ zero(T)
-        du[1] = -xi * qy - tt - alp3 * ai1 * sd
-        du[2] = -q / r + alp3 * y / rd * sd
-        du[3] = q * qy - alp3 * ai2 * sd
-        du[4] = xi2 * q * y32 - alp3 * aj1 * sd
-        du[5] = xi * q / r3 - alp3 * aj2 * sd
-        du[6] = -xi * q2 * y32 - alp3 * aj3 * sd
-        du[7] = -xi * fy - d * x11 + alp3 * (xy + aj4) * sd
-        du[8] = -ey + alp3 * (1 / r + aj5) * sd
-        du[9] = q * fy - alp3 * (qy - aj6) * sd
-        du[10] = -xi * fz - y * x11 + alp3 * ak1 * sd
-        du[11] = -ez + alp3 * y * d11 * sd
-        du[12] = q * fz + alp3 * ak2 * sd
-        u .+= disl[1] / 2π * du
-    end
+    coeff = disl[1] / 2π
+    u[1]  += coeff * (-xi * qy - tt - alp3 * ai1 * sd)
+    u[2]  += coeff * (-q / r + alp3 * y / rd * sd)
+    u[3]  += coeff * (q * qy - alp3 * ai2 * sd)
+    u[4]  += coeff * (xi2 * q * y32 - alp3 * aj1 * sd)
+    u[5]  += coeff * (xi * q / r3 - alp3 * aj2 * sd)
+    u[6]  += coeff * (-xi * q2 * y32 - alp3 * aj3 * sd)
+    u[7]  += coeff * (-xi * fy - d * x11 + alp3 * (xy + aj4) * sd)
+    u[8]  += coeff * (-ey + alp3 * (1 / r + aj5) * sd)
+    u[9]  += coeff * (q * fy - alp3 * (qy - aj6) * sd)
+    u[10] += coeff * (-xi * fz - y * x11 + alp3 * ak1 * sd)
+    u[11] += coeff * (-ez + alp3 * y * d11 * sd)
+    u[12] += coeff * (q * fz + alp3 * ak2 * sd)
 
-    if disl[2] ≉ zero(T)
-        du[1] = -q / r + alp3 * ai3 * sdcd
-        du[2] = -et * qx - tt - alp3 * xi / rd * sdcd
-        du[3] = q * qx + alp3 * ai4 * sdcd
-        du[4] = xi * q / r3 + alp3 * aj4 * sdcd
-        du[5] = et * q / r3 + qy + alp3 * aj5 * sdcd
-        du[6] = -q2 / r3 + alp3 * aj6 * sdcd
-        du[7] = -ey + alp3 * aj1 * sdcd
-        du[8] = -et * gy - xy * sd + alp3 * aj2 * sdcd
-        du[9] = q * gy + alp3 * aj3 * sdcd
-        du[10] = -ez - alp3 * ak3 * sdcd
-        du[11] = -et * gz - xy * cd - alp3 * xi * d11 * sdcd
-        du[12] = q * gz - alp3 * ak4 * sdcd
-        u .+= disl[2] / 2π * du
-    end
+    coeff = disl[2] / 2π
+    u[1]  += coeff * (-q / r + alp3 * ai3 * sdcd)
+    u[2]  += coeff * (-et * qx - tt - alp3 * xi / rd * sdcd)
+    u[3]  += coeff * (q * qx + alp3 * ai4 * sdcd)
+    u[4]  += coeff * (xi * q / r3 + alp3 * aj4 * sdcd)
+    u[5]  += coeff * (et * q / r3 + qy + alp3 * aj5 * sdcd)
+    u[6]  += coeff * (-q2 / r3 + alp3 * aj6 * sdcd)
+    u[7]  += coeff * (-ey + alp3 * aj1 * sdcd)
+    u[8]  += coeff * (-et * gy - xy * sd + alp3 * aj2 * sdcd)
+    u[9]  += coeff * (q * gy + alp3 * aj3 * sdcd)
+    u[10] += coeff * (-ez - alp3 * ak3 * sdcd)
+    u[11] += coeff * (-et * gz - xy * cd - alp3 * xi * d11 * sdcd)
+    u[12] += coeff * (q * gz - alp3 * ak4 * sdcd)
 
-    if disl[3] ≉ zero(T)
-        du[1] = q * qy - alp3 * ai3 * sdsd
-        du[2] = q * qx + alp3 * xi / rd * sdsd
-        du[3] = et * qx + xi * qy - tt - alp3 * ai4 * sdsd
-        du[4] = -xi * q2 * y32 - alp3 * aj4 * sdsd
-        du[5] = -q2 / r3 - alp3 * aj5 * sdsd
-        du[6] = q * q2 * y32 - alp3 * aj6 * sdsd
-        du[7] = q * fy - alp3 * aj1 * sdsd
-        du[8] = q * gy - alp3 * aj2 * sdsd
-        du[9] = -q * hy - alp3 * aj3 * sdsd
-        du[10] = q * fz + alp3 * ak3 * sdsd
-        du[11] = q * gz + alp3 * xi * d11 * sdsd
-        du[12] = -q * hz + alp3 * ak4 * sdsd
-        u .+= disl[3] / 2π * du
-    end
-    return u
- end
+    coeff = disl[3] / 2π
+    u[1]  += coeff * (q * qy - alp3 * ai3 * sdsd)
+    u[2]  += coeff * (q * qx + alp3 * xi / rd * sdsd)
+    u[3]  += coeff * (et * qx + xi * qy - tt - alp3 * ai4 * sdsd)
+    u[4]  += coeff * (-xi * q2 * y32 - alp3 * aj4 * sdsd)
+    u[5]  += coeff * (-q2 / r3 - alp3 * aj5 * sdsd)
+    u[6]  += coeff * (q * q2 * y32 - alp3 * aj6 * sdsd)
+    u[7]  += coeff * (q * fy - alp3 * aj1 * sdsd)
+    u[8]  += coeff * (q * gy - alp3 * aj2 * sdsd)
+    u[9]  += coeff * (-q * hy - alp3 * aj3 * sdsd)
+    u[10] += coeff * (q * fz + alp3 * ak3 * sdsd)
+    u[11] += coeff * (q * gz + alp3 * xi * d11 * sdsd)
+    u[12] += coeff * (-q * hz + alp3 * ak4 * sdsd)
+end
 
 
-function uc(sc1::B1, sc2::B2, xi::T, et::T, q::T, z::T, disl::A
-    ) where {T <: Number, A <: AbstractArray{T}, B1 <: NTuple{12, T}, B2 <: NTuple{24, T}}
+@inline function uc(u::A, sc1::B1, sc2::B2, xi::T, et::T, q::T, z::T, disl::A
+    ) where {T <: Number,A <: AbstractArray{T},B1 <: NTuple{12,T},B2 <: NTuple{24,T}}
     alp1, alp2, alp3, alp4, alp5, sd, cd, sdsd, cdcd, sdcd, s2d, sc2d = sc1
     xi2, et2, q2, r, r2, r3, r5, y, d, tt, alx, ale, x11, y11, x32, y32, ey, ez, fy, fz, gy, gz, hy, hz = sc2
 
-    u, du = zeros(T, 12), zeros(T, 12)
-
+    fill!(u, zero(T))
     c = d + z
     x53 = (8 * r2 + 9 * r * xi + 3 * xi2) * x11 * x11 * x11 / r2
     y53 = (8 * r2 + 9 * r * et + 3 * et2) * y11 * y11 * y11 / r2
@@ -415,64 +407,57 @@ function uc(sc1::B1, sc2::B2, xi::T, et::T, q::T, z::T, disl::A
     qqy = 3 * c * d / r5 - qq * sd
     qqz = 3 * c * y / r5 - qq * cd + q * y32
     xy = xi * y11
-    qx = q * x11
+    # qx = q * x11
     qy = q * y11
     qr = 3 * q / r5
-    cqx = c * q * x53
+    # cqx = c * q * x53
     cdr = (c + d) / r3
     yy0 = y / r3 - y0 * cd
 
-    if disl[1] ≉ zero(T)
-        du[1] = alp4 * xy * cd - alp5 * xi * q * z32
-        du[2] = alp4 * (cd / r + 2 * qy * sd) - alp5 * c * q / r3
-        du[3] = alp4 * qy * cd - alp5 * (c * et / r3 - z * y11 + xi2 * z32)
-        du[4] = alp4 * y0 * cd - alp5 * q * z0
-        du[5] = -alp4 * xi * (cd / r3 + 2 * q * y32 * sd) + alp5 * c * xi * qr
-        du[6] = -alp4 * xi * q * y32 * cd + alp5 * xi * (3 * c * et / r5 - qq)
-        du[7] = -alp4 * xi * ppy * cd - alp5 * xi * qqy
-        du[8] = alp4 * 2 * (d / r3 - y0 * sd) * sd - y / r3 * cd - alp5 * (cdr * sd - et / r3 - c * y * qr)
-        du[9] = -alp4 * q / r3 + yy0 * sd + alp5 * (cdr * cd + c * d * qr - (y0 * cd + q * z0) * sd)
-        du[10] = alp4 * xi * ppz * cd - alp5 * xi * qqz
-        du[11] = alp4 * 2 * (y / r3 - y0 * cd) * sd + d / r3 * cd - alp5 * (cdr * cd + c * d * qr)
-        du[12] = yy0 * cd - alp5 * (cdr * sd - c * y * qr - y0 * sdsd + q * z0 * cd)
-        u .+= disl[1] / 2π * du
-    end
+    coeff = disl[1] / 2π
+    u[1]  += coeff * (alp4 * xy * cd - alp5 * xi * q * z32)
+    u[2]  += coeff * (alp4 * (cd / r + 2 * qy * sd) - alp5 * c * q / r3)
+    u[3]  += coeff * (alp4 * qy * cd - alp5 * (c * et / r3 - z * y11 + xi2 * z32))
+    u[4]  += coeff * (alp4 * y0 * cd - alp5 * q * z0)
+    u[5]  += coeff * (-alp4 * xi * (cd / r3 + 2 * q * y32 * sd) + alp5 * c * xi * qr)
+    u[6]  += coeff * (-alp4 * xi * q * y32 * cd + alp5 * xi * (3 * c * et / r5 - qq))
+    u[7]  += coeff * (-alp4 * xi * ppy * cd - alp5 * xi * qqy)
+    u[8]  += coeff * (alp4 * 2 * (d / r3 - y0 * sd) * sd - y / r3 * cd - alp5 * (cdr * sd - et / r3 - c * y * qr))
+    u[9]  += coeff * (-alp4 * q / r3 + yy0 * sd + alp5 * (cdr * cd + c * d * qr - (y0 * cd + q * z0) * sd))
+    u[10] += coeff * (alp4 * xi * ppz * cd - alp5 * xi * qqz)
+    u[11] += coeff * (alp4 * 2 * (y / r3 - y0 * cd) * sd + d / r3 * cd - alp5 * (cdr * cd + c * d * qr))
+    u[12] += coeff * (yy0 * cd - alp5 * (cdr * sd - c * y * qr - y0 * sdsd + q * z0 * cd))
 
-    if disl[2] ≉ zero(T)
-        du[1] = alp4 * cd / r - qy * sd - alp5 * c * q / r3
-        du[2] = alp4 * y * x11 - alp5 * c * et * q * x32
-        du[3] = -d * x11 - xy * sd - alp5 * c * (x11 - q2 * x32)
-        du[4] = -alp4 * xi / r3 * cd + alp5 * c * xi * qr + xi * q * y32 * sd
-        du[5] = -alp4 * y / r3 + alp5 * c * et * qr
-        du[6] = d / r3 - y0 * sd + alp5 * c / r3 * (1 - 3 * q2 / r2)
-        du[7] = -alp4 * et / r3 + y0 * sdsd - alp5 * (cdr * sd - c * y * qr)
-        du[8] = alp4 * (x11 - y * y * x32) - alp5 * c * ((d + 2 * q * cd) * x32 - y * et * q * x53)
-        du[9] = xi * ppy * sd + y * d * x32 + alp5 * c * ((y + 2 * q * sd) * x32 - y * q2 * x53)
-        du[10] = -q / r3 + y0 * sdcd - alp5 * (cdr * cd + c * d * qr)
-        du[11] = alp4 * y * d * x32 - alp5 * c * ((y - 2 * q * sd) * x32 + d * et * q * x53)
-        du[12] = -xi * ppz * sd + x11 - d * d * x32 - alp5 * c * ((d - 2 * q * cd) * x32 - d * q2 * x53)
-        u .+= disl[2] / 2π * du
-    end
+    coeff = disl[2] / 2π
+    u[1]  += coeff * (alp4 * cd / r - qy * sd - alp5 * c * q / r3)
+    u[2]  += coeff * (alp4 * y * x11 - alp5 * c * et * q * x32)
+    u[3]  += coeff * (-d * x11 - xy * sd - alp5 * c * (x11 - q2 * x32))
+    u[4]  += coeff * (-alp4 * xi / r3 * cd + alp5 * c * xi * qr + xi * q * y32 * sd)
+    u[5]  += coeff * (-alp4 * y / r3 + alp5 * c * et * qr)
+    u[6]  += coeff * (d / r3 - y0 * sd + alp5 * c / r3 * (1 - 3 * q2 / r2))
+    u[7]  += coeff * (-alp4 * et / r3 + y0 * sdsd - alp5 * (cdr * sd - c * y * qr))
+    u[8]  += coeff * (alp4 * (x11 - y * y * x32) - alp5 * c * ((d + 2 * q * cd) * x32 - y * et * q * x53))
+    u[9]  += coeff * (xi * ppy * sd + y * d * x32 + alp5 * c * ((y + 2 * q * sd) * x32 - y * q2 * x53))
+    u[10] += coeff * (-q / r3 + y0 * sdcd - alp5 * (cdr * cd + c * d * qr))
+    u[11] += coeff * (alp4 * y * d * x32 - alp5 * c * ((y - 2 * q * sd) * x32 + d * et * q * x53))
+    u[12] += coeff * (-xi * ppz * sd + x11 - d * d * x32 - alp5 * c * ((d - 2 * q * cd) * x32 - d * q2 * x53))
 
-    if disl[3] ≉ zero(T)
-        du[1] = -alp4 * (sd / r + qy * cd) - alp5 * (z * y11 - q2 * z32)
-        du[2] = alp4 * 2 * xy * sd + d * x11 - alp5 * c * (x11 - q2 * x32)
-        du[3] = alp4 * (y * x11 + xy * cd) + alp5 * q * (c * et * x32 + xi * z32)
-        du[4] = alp4 * xi / r3 * sd + xi * q * y32 * cd + alp5 * xi * (3 * c * et / r5 - 2 * z32 - z0)
-        du[5] = alp4 * 2 * y0 * sd - d / r3 + alp5 * c / r3 * (1 - 3 * q2 / r2)
-        du[6] = -alp4 * yy0 - alp5 * (c * et * qr - q * z0)
-        du[7] = alp4 * (q / r3 + y0 * sdcd) + alp5 * (z / r3 * cd + c * d * qr - q * z0 * sd)
-        du[8] = -alp4 * 2 * xi * ppy * sd - y * d * x32 + alp5 * c * ((y + 2 * q * sd) * x32 - y * q2 * x53)
-        du[9] = -alp4 * (xi * ppy * cd - x11 + y * y * x32) + alp5 * (c * ((d + 2 * q * cd) * x32 - y * et * q * x53) + xi * qqy)
-        du[10] = -et / r3 + y0 * cdcd - alp5 * (z / r3 * sd - c * y * qr - y0 * sdsd + q * z0 * cd)
-        du[11] = alp4 * 2 * xi * ppz * sd - x11 + d * d * x32 - alp5 * c * ((d - 2 * q * cd) * x32 - d * q2 * x53)
-        du[12] = alp4 * (xi * ppz * cd + y * d * x32) + alp5 * (c * ((y - 2 * q * sd) * x32 + d * et * q * x53) + xi * qqz)
-        u .+= disl[3] / 2π * du
-    end
-    return u
+    coeff = disl[3] / 2π
+    u[1]  += coeff * (-alp4 * (sd / r + qy * cd) - alp5 * (z * y11 - q2 * z32))
+    u[2]  += coeff * (alp4 * 2 * xy * sd + d * x11 - alp5 * c * (x11 - q2 * x32))
+    u[3]  += coeff * (alp4 * (y * x11 + xy * cd) + alp5 * q * (c * et * x32 + xi * z32))
+    u[4]  += coeff * (alp4 * xi / r3 * sd + xi * q * y32 * cd + alp5 * xi * (3 * c * et / r5 - 2 * z32 - z0))
+    u[5]  += coeff * (alp4 * 2 * y0 * sd - d / r3 + alp5 * c / r3 * (1 - 3 * q2 / r2))
+    u[6]  += coeff * (-alp4 * yy0 - alp5 * (c * et * qr - q * z0))
+    u[7]  += coeff * (alp4 * (q / r3 + y0 * sdcd) + alp5 * (z / r3 * cd + c * d * qr - q * z0 * sd))
+    u[8]  += coeff * (-alp4 * 2 * xi * ppy * sd - y * d * x32 + alp5 * c * ((y + 2 * q * sd) * x32 - y * q2 * x53))
+    u[9]  += coeff * (-alp4 * (xi * ppy * cd - x11 + y * y * x32) + alp5 * (c * ((d + 2 * q * cd) * x32 - y * et * q * x53) + xi * qqy))
+    u[10] += coeff * (-et / r3 + y0 * cdcd - alp5 * (z / r3 * sd - c * y * qr - y0 * sdsd + q * z0 * cd))
+    u[11] += coeff * (alp4 * 2 * xi * ppz * sd - x11 + d * d * x32 - alp5 * c * ((d - 2 * q * cd) * x32 - d * q2 * x53))
+    u[12] += coeff * (alp4 * (xi * ppz * cd + y * d * x32) + alp5 * (c * ((y - 2 * q * sd) * x32 + d * et * q * x53) + xi * qqz))
 end
 
-function shared_constants_1(α::T, dip::T) where {T <: Number}
+@inline function shared_constants_1(α::T, dip::T) where {T <: Number}
     alp1 = (1 - α) / 2
     alp2 = α / 2
     alp3 = (1 - α) / α
@@ -485,10 +470,10 @@ function shared_constants_1(α::T, dip::T) where {T <: Number}
     sdcd = sd * cd
     s2d = 2 * sdcd
     sc2d = cdcd - sdsd
-    sc = (alp1, alp2, alp3, alp4, alp5, sd, cd, sdsd, cdcd, sdcd, s2d, sc2d)
+    (alp1, alp2, alp3, alp4, alp5, sd, cd, sdsd, cdcd, sdcd, s2d, sc2d)
 end
 
-function shared_constants_2(xi::T, et::T, q::T, sd::T, cd::T, kxi::T, ket::T) where {T <: Number}
+@inline function shared_constants_2(xi::T, et::T, q::T, sd::T, cd::T, kxi::T, ket::T) where {T <: Number}
     xi2 = xi * xi
     et2 = et * et
     q2 = q * q
@@ -513,8 +498,8 @@ function shared_constants_2(xi::T, et::T, q::T, sd::T, cd::T, kxi::T, ket::T) wh
     else
         rxi = r + xi
         alx = log(rxi)
-        x11 = 1 / (r*rxi)
-        x32 = (r+rxi)*x11*x11/r
+        x11 = 1 / (r * rxi)
+        x32 = (r + rxi) * x11 * x11 / r
     end
 
     if ket ≈ one(T)
@@ -524,8 +509,8 @@ function shared_constants_2(xi::T, et::T, q::T, sd::T, cd::T, kxi::T, ket::T) wh
     else
         ret = r + et
         ale = log(ret)
-        y11 = 1 / (r*ret)
-        y32 = (r + ret) * y11 * y11/ r
+        y11 = 1 / (r * ret)
+        y32 = (r + ret) * y11 * y11 / r
     end
 
     ey = sd / r - y * q / r3
@@ -537,5 +522,5 @@ function shared_constants_2(xi::T, et::T, q::T, sd::T, cd::T, kxi::T, ket::T) wh
     hy = d * q * x32 + xi * q * y32 * sd
     hz = y * q * x32 + xi * q * y32 * cd
 
-    return (xi2, et2, q2, r, r2, r3, r5, y, d, tt, alx, ale, x11, y11, x32, y32, ey, ez, fy, fz, gy, gz, hy, hz)
+    (xi2, et2, q2, r, r2, r3, r5, y, d, tt, alx, ale, x11, y11, x32, y32, ey, ez, fy, fz, gy, gz, hy, hz)
 end

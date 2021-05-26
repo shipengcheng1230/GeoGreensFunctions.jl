@@ -8,15 +8,15 @@
     r1, r2, r3
 end
 
-@inline function coord_trans(x1::T, x2::T, x3::T, A::M) where {T<:AbstractVector, M<:AbstractMatrix}
-    r1, r2, r3 = similar(x1), similar(x2), similar(x3)
-    @inbounds @simd for i ∈ eachindex(r1)
-        r1[i] = A[1,1] * x1[i] + A[1,2] * x2[i] + A[1,3] * x3[i]
-        r2[i] = A[2,1] * x1[i] + A[2,2] * x2[i] + A[2,3] * x3[i]
-        r3[i] = A[3,1] * x1[i] + A[3,2] * x2[i] + A[3,3] * x3[i]
-    end
-    r1, r2, r3
-end
+# @inline function coord_trans(x1::T, x2::T, x3::T, A::M) where {T<:AbstractVector, M<:AbstractMatrix}
+#     r1, r2, r3 = similar(x1), similar(x2), similar(x3)
+#     @inbounds @simd for i ∈ eachindex(r1)
+#         r1[i] = A[1,1] * x1[i] + A[1,2] * x2[i] + A[1,3] * x3[i]
+#         r2[i] = A[2,1] * x1[i] + A[2,2] * x2[i] + A[2,3] * x3[i]
+#         r3[i] = A[3,1] * x1[i] + A[3,2] * x2[i] + A[3,3] * x3[i]
+#     end
+#     r1, r2, r3
+# end
 
 @inline function AngDisDisp(x::U, y::U, z::U, alpha::T, bx::T, by::T, bz::T, ν::T) where {T<:Number, U}
     sinA, cosA = sincos(alpha)

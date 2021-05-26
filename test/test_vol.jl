@@ -30,25 +30,18 @@ using FastGaussQuadrature
 
     @testset "Displacement" begin
         u_truth = readdlm(joinpath(@__DIR__, "data/test_disp_vol_hex8.dat"), ' ', Float64)
-        fu = (x) -> _disp_vol_hex8(x..., q1, q2, q3, L, T, W, theta, epsv11, epsv12, epsv13, epsv22, epsv23, epsv33, G, nu)
-        u_cal = map(fu, xxs) |> vec
-        ftest = (i) -> u_cal[i] ≈ u_truth[i,:]
-        @test map(ftest, 1: length(u_cal)) |> all
+        for (i, x) in enumerate(xxs)
+            u = _disp_vol_hex8(x..., q1, q2, q3, L, T, W, theta, epsv11, epsv12, epsv13, epsv22, epsv23, epsv33, G, nu)
+            @test u ≈ u_truth[i,:]
+        end
     end
 
     @testset "Stress" begin
-        epsv11 = 11e-6
         u_truth = readdlm(joinpath(@__DIR__, "data/test_stress_vol_hex8.dat"), ' ', Float64)
-        fu = (x) -> _stress_vol_hex8(x..., q1, q2, q3, L, T, W, theta, epsv11, epsv12, epsv13, epsv22, epsv23, epsv33, G, nu)
-        u_cal = map(fu, xxs) |> vec
-        function funtest(i::Integer)
-            if all(map(isnan, u_cal[i])) && all(map(isnan, u_truth[i,:]))
-                return true
-            else
-                return u_cal[i] ≈ u_truth[i,:]
-            end
+        for (i, x) in enumerate(xxs)
+            u = _stress_vol_hex8(x..., q1, q2, q3, L, T, W, theta, epsv11, epsv12, epsv13, epsv22, epsv23, epsv33, G, nu)
+            @test ifelse(all(map(isnan, u)) && all(map(isnan, u_truth[i,:])), true, u ≈ u_truth[i,:])
         end
-        @test map(funtest, 1: length(u_cal)) |> all
     end
 end
 
@@ -74,18 +67,18 @@ end
 
     @testset "Displacement" begin
         u_truth = readdlm(joinpath(@__DIR__, "data/test_disp_vol_tet4.dat"), ' ', Float64)
-        fu = (x) -> _disp_vol_tet4(qd, x..., A, B, C, D, epsv11, epsv12, epsv13, epsv22, epsv23, epsv33, nu)
-        u_cal = map(fu, xxs) |> vec
-        ftest = (i) -> u_cal[i] ≈ u_truth[i,:]
-        @test map(ftest, 1: length(u_cal)) |> all
+        for (i, x) in enumerate(xxs)
+            u = _disp_vol_tet4(qd, x..., A, B, C, D, epsv11, epsv12, epsv13, epsv22, epsv23, epsv33, nu)
+            @test u ≈ u_truth[i, :]
+        end
     end
 
     @testset "Stress" begin
         u_truth = readdlm(joinpath(@__DIR__, "data/test_stress_vol_tet4.dat"), ' ', Float64)
-        fu = (x) -> _stress_vol_tet4(qd, x..., A, B, C, D, epsv11, epsv12, epsv13, epsv22, epsv23, epsv33, G, nu)
-        u_cal = map(fu, xxs) |> vec
-        ftest = (i) -> u_cal[i] ≈ u_truth[i,:]
-        @test map(ftest, 1: length(u_cal)) |> all
+        for (i, x) in enumerate(xxs)
+            u = _stress_vol_tet4(qd, x..., A, B, C, D, epsv11, epsv12, epsv13, epsv22, epsv23, epsv33, G, nu)
+            @test u ≈ u_truth[i, :]
+        end
     end
 end
 
@@ -107,21 +100,21 @@ end
 
     @testset "Stress" begin
         u_truth = readdlm(joinpath(@__DIR__, "data", "test_stress_volinplane_rect.dat"), ' ', Float64)
-        fu = (x) -> _stress_volinplane_rect(x..., q2, q3, T, W, phi, epsv22, epsv23, epsv33, G, nu)
-        u_cal = map(fu, xxs) |> vec
-        ftest = (i) -> u_cal[i] ≈ u_truth[i,:]
-        @test map(ftest, 1: length(u_cal)) |> all
+        for (i, x) in enumerate(xxs)
+            u = _stress_volinplane_rect(x..., q2, q3, T, W, phi, epsv22, epsv23, epsv33, G, nu)
+            @test u ≈ u_truth[i,:]
+        end
     end
 end
 
 @testset "Coordinates: ENU <-> NED" begin
     x, y, z, qx, qy, qz, L, T, W, θ, ϵxx, ϵxy, ϵxz, ϵyy, ϵyz, ϵzz, G = rand(17)
     ν = 0.2
-    u1 = disp_vol_hex8(x, y, -z, qx, qy, -qz, L, T, W, θ, ϵxx, ϵxy, ϵxz, ϵyy, ϵyz, ϵzz, G, ν)
+    u1 = disp_vol_hex8(x, y, -z, qx, qy, -qz, T, L, W, θ, ϵxx, ϵxy, ϵxz, ϵyy, ϵyz, ϵzz, G, ν)
     u2 = _disp_vol_hex8(y, x, z, qy, qx, qz, L, T, W, θ, ϵyy, ϵxy, -ϵyz, ϵxx, -ϵxz, ϵzz, G, ν)
     @test u1[1] ≈ u2[2] && u1[2] ≈ u2[1] && u1[3] ≈ -u2[3]
 
-    u1 = stress_vol_hex8(x, y, -z, qx, qy, -qz, L, T, W, θ, ϵxx, ϵxy, ϵxz, ϵyy, ϵyz, ϵzz, G, ν)
+    u1 = stress_vol_hex8(x, y, -z, qx, qy, -qz, T, L, W, θ, ϵxx, ϵxy, ϵxz, ϵyy, ϵyz, ϵzz, G, ν)
     u2 = _stress_vol_hex8(y, x, z, qy, qx, qz, L, T, W, θ, ϵyy, ϵxy, -ϵyz, ϵxx, -ϵxz, ϵzz, G, ν)
     @test u1[1] ≈ u2[4] && u1[2] ≈ u2[2] && u1[3] ≈ -u2[5] && u1[4] ≈ u2[1] && u1[5] ≈ -u2[3] && u1[6] ≈ u2[6]
 
