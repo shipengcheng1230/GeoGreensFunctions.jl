@@ -10,8 +10,11 @@ using Base.Iterators
         pos = product(-40.: -30., 20.: 30., 10.: 15.)
         fu = (x) -> dc3d(reverse(x)..., 2. /3, 50., 70., [-80., 120.], [-30., 25.], [200., -150., 100.])
         u_cal = map(fu, pos) |> vec
-        ftest = (i) -> u_truth[i,:] ≈ u_cal[i]
-        map(ftest, 1: length(u_cal)) |> all
+        cache = GeoGreensFunctions.dc3d_cache(Float64)
+        for (i, x) in enumerate(pos)
+            dc3d(reverse(x)..., 2. /3, 50., 70., [-80., 120.], [-30., 25.], [200., -150., 100.], cache)
+            @test u_truth[i,:] ≈ u_cal[i] ≈ cache[1]
+        end
     end
 
     @testset "Negative depth" begin

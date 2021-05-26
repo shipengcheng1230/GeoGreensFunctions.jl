@@ -100,28 +100,28 @@ end
     @test p′ == [p1, p2, p3, p4] # test if pts coordinates have been changed
 end
 
-@testset "Full space solution" begin
-    xs = collect(-10.0: 0.5: 10.0)
-    ys = collect(-8.0: 0.5: 8.0)
-    zs = 4.0
+# @testset "Full space solution" begin
+#     xs = collect(-10.0: 0.5: 10.0)
+#     ys = collect(-8.0: 0.5: 8.0)
+#     zs = 4.0
 
-    xyz = Iterators.product(zs, ys, xs) |> collect
-    Y = [q[2] for q in xyz] |> vec
-    X = [q[3] for q in xyz] |> vec
-    Z = [q[1] for q in xyz] |> vec
+#     xyz = Iterators.product(zs, ys, xs) |> collect
+#     Y = [q[2] for q in xyz] |> vec
+#     X = [q[3] for q in xyz] |> vec
+#     Z = [q[1] for q in xyz] |> vec
 
-    @testset "displacement" begin
-        u, v, w = disp_rect_fs(X, Y, Z, 3.0, 1.0, 0.0, 2.0, 1.0, 10.0, 75.0, 30.0, 20.0, 1.0, 0.15, 0.25, Val(:pc))
-        # validation data generated via orginal Matlab code
-        truth = readdlm(joinpath(@__DIR__, "data/test_disp_rect_fs.dat"), ' ', Float64)
-        @test truth[:,1] ≈ u && truth[:,2] ≈ v && truth[:,3] ≈ w
-    end
-    @testset "stress" begin
-        stress = stress_rect_fs(X, Y, Z, 3.0, 1.0, 0.0, 2.0, 1.0, 10.0, 75.0, 30.0, 20.0, 1.0, 0.15, 0.66e11, 0.33e11, Val(:pc))
-        # validation data generated via orginal Matlab code
-        truth = readdlm(joinpath(@__DIR__, "data/test_stress_rect_fs.dat"), ' ', Float64)
-        for i ∈ 1: 6
-            @test truth[:,i] ≈ stress[i]
-        end
-    end
-end
+#     @testset "displacement" begin
+#         u, v, w = disp_rect_fs(X, Y, Z, 3.0, 1.0, 0.0, 2.0, 1.0, 10.0, 75.0, 30.0, 20.0, 1.0, 0.15, 0.25, Val(:pc))
+#         # validation data generated via orginal Matlab code
+#         truth = readdlm(joinpath(@__DIR__, "data/test_disp_rect_fs.dat"), ' ', Float64)
+#         @test truth[:,1] ≈ u && truth[:,2] ≈ v && truth[:,3] ≈ w
+#     end
+#     @testset "stress" begin
+#         stress = stress_rect_fs(X, Y, Z, 3.0, 1.0, 0.0, 2.0, 1.0, 10.0, 75.0, 30.0, 20.0, 1.0, 0.15, 0.66e11, 0.33e11, Val(:pc))
+#         # validation data generated via orginal Matlab code
+#         truth = readdlm(joinpath(@__DIR__, "data/test_stress_rect_fs.dat"), ' ', Float64)
+#         for i ∈ 1: 6
+#             @test truth[:,i] ≈ stress[i]
+#         end
+#     end
+# end

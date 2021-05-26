@@ -41,26 +41,26 @@ export strain_vol_hex8, strain_vol_hex8!
 export stress_vol_hex8, stress_vol_hex8!
 
 # ENU coordinates: https://en.wikipedia.org/wiki/Local_tangent_plane_coordinates
-function disp_vol_hex8!(u::AbstractVector{R}, x::R, y::R, z::R, qx::R, qy::R, qz::R, L::R, T::R, W::R, θ::R, ϵxx::R, ϵxy::R, ϵxz::R, ϵyy::R, ϵyz::R, ϵzz::R, G::R, ν::R) where R
+function disp_vol_hex8!(u::AbstractVector{R}, x::R, y::R, z::R, qx::R, qy::R, qz::R, T::R, L::R, W::R, θ::R, ϵxx::R, ϵxy::R, ϵxz::R, ϵyy::R, ϵyz::R, ϵzz::R, G::R, ν::R) where R
     _disp_vol_hex8!(u, y, x, -z, qy, qx, -qz, L, T, W, θ, ϵyy, ϵxy, -ϵyz, ϵxx, -ϵxz, ϵzz, G, ν)
     u[1], u[2], u[3] = u[2], u[1], -u[3]
 end
 
-function disp_vol_hex8(x::R, y::R, z::R, qx::R, qy::R, qz::R, L::R, T::R, W::R, θ::R, ϵxx::R, ϵxy::R, ϵxz::R, ϵyy::R, ϵyz::R, ϵzz::R, G::R, ν::R) where R
+function disp_vol_hex8(x::R, y::R, z::R, qx::R, qy::R, qz::R, T::R, L::R, W::R, θ::R, ϵxx::R, ϵxy::R, ϵxz::R, ϵyy::R, ϵyz::R, ϵzz::R, G::R, ν::R) where R
     u = Vector{R}(undef, 3)
-    disp_vol_hex8!(u, x, y, z, qx, qy, qz, L, T, W, θ, ϵxx, ϵxy, ϵxz, ϵyy, ϵyz, ϵzz, G, ν)
+    disp_vol_hex8!(u, x, y, z, qx, qy, qz, T, L, W, θ, ϵxx, ϵxy, ϵxz, ϵyy, ϵyz, ϵzz, G, ν)
     return u
 end
 
-function stress_vol_hex8!(σ::AbstractVector{R}, x::R, y::R, z::R, qx::R, qy::R, qz::R, L::R, T::R, W::R, θ::R, ϵxx::R, ϵxy::R, ϵxz::R, ϵyy::R, ϵyz::R, ϵzz::R, G::R, ν::R) where R
+function stress_vol_hex8!(σ::AbstractVector{R}, x::R, y::R, z::R, qx::R, qy::R, qz::R, T::R, L::R, W::R, θ::R, ϵxx::R, ϵxy::R, ϵxz::R, ϵyy::R, ϵyz::R, ϵzz::R, G::R, ν::R) where R
     _stress_vol_hex8!(σ, y, x, -z, qy, qx, -qz, L, T, W, θ, ϵyy, ϵxy, -ϵyz, ϵxx, -ϵxz, ϵzz, G, ν)
     σ[1], σ[4] = σ[4], σ[1]
     σ[3], σ[5] = -σ[5], -σ[3]
 end
 
-function stress_vol_hex8(x::R, y::R, z::R, qx::R, qy::R, qz::R, L::R, T::R, W::R, θ::R, ϵxx::R, ϵxy::R, ϵxz::R, ϵyy::R, ϵyz::R, ϵzz::R, G::R, ν::R) where R
+function stress_vol_hex8(x::R, y::R, z::R, qx::R, qy::R, qz::R, T::R, L::R, W::R, θ::R, ϵxx::R, ϵxy::R, ϵxz::R, ϵyy::R, ϵyz::R, ϵzz::R, G::R, ν::R) where R
     σ = Vector{R}(undef, 6)
-    stress_vol_hex8!(σ, x, y, z, qx, qy, qz, L, T, W, θ, ϵxx, ϵxy, ϵxz, ϵyy, ϵyz, ϵzz, G, ν)
+    stress_vol_hex8!(σ, x, y, z, qx, qy, qz, T, L, W, θ, ϵxx, ϵxy, ϵxz, ϵyy, ϵyz, ϵzz, G, ν)
     return σ
 end
 

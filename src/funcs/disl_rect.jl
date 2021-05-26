@@ -43,7 +43,7 @@
 # http://www.volcanodeformation.com
 #
 # Translated by Pengcheng Shi (shipengcheng1230@gmail.com) 12/2018
-#
+# The broadcast here causes tremendous amount of compiliation time, needs rewriting!
 
 export disp_rect_fs, strain_rect_fs, stress_rect_fs
 
