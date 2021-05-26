@@ -3,7 +3,6 @@
 Modules = [GeoGreensFunctions]
 Pages = [
   "disl_dc3d.jl",
-  "disl_rect.jl",
   "disl_seg2.jl",
   "disl_tri3.jl",
   "vol_hex8.jl",
