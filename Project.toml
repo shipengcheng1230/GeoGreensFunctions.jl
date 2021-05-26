@@ -1,7 +1,7 @@
 name = "GeoGreensFunctions"
 uuid = "1bc39cc2-b9cd-470c-972b-2e3fb46182c5"
 authors = ["shipengcheng1230 <shipengcheng1230@gmail.com>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
