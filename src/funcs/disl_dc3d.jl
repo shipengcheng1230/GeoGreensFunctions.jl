@@ -154,7 +154,12 @@ A vector of 12 numbers, each is ``u_{x}``, ``u_{y}``, ``u_{z}``, ``u_{x,x}``,
     ``u_{y,z}``, ``u_{z,z}``.
 """
 function dc3d(x::T, y::T, z::T, α::T, dep::T, dip::T, al::A, aw::A, disl::AbstractVector{<:Real},
-    cache=dc3d_cache(T)) where {T <: Real,A <: AbstractVecOrMat{<:Real}}
+    cache::U=dc3d_cache(T)) where {T<:Real, A<:AbstractVector, U}
+    dc3d(x, y, z, α, dep, dip, al[1], al[2], aw[1], aw[2], disl[1], disl[2], disl[3], cache)
+end
+
+function dc3d(x::T, y::T, z::T, α::T, dep::T, dip::T, al1::T, al2::T, aw1::T, aw2::T, disl1::T, disl2::T, disl3::T,
+    cache::U=dc3d_cache(T)) where {T<:Real, U}
 
     u, du, dua, dub, duc, zerosol, xi, et, kxi, ket = cache
     fill!(u, zero(T))
@@ -163,15 +168,15 @@ function dc3d(x::T, y::T, z::T, α::T, dep::T, dip::T, al::A, aw::A, disl::Abstr
 
     z > zero(T) && return zerosol
 
-    xi[1] = x - al[1]
-    xi[2] = x - al[2]
+    xi[1] = x - al1
+    xi[2] = x - al2
     d = dep + z
     sc1 = shared_constants_1(α, dip)
     sd, cd = sc1[6], sc1[7]
     p = y * cd + d * sd
     q = y * sd - d * cd
-    et[1] = p - aw[1]
-    et[2] = p - aw[2]
+    et[1] = p - aw1
+    et[2] = p - aw2
 
     if q ≈ zero(T) && ((xi[1] * xi[2] ≤ zero(T) && et[1] * et[2] ≈ zero(T)) ||	(et[1] * et[2] ≤ zero(T) && xi[1] * xi[2] ≈ zero(T)))
         return zerosol
@@ -188,7 +193,7 @@ function dc3d(x::T, y::T, z::T, α::T, dep::T, dip::T, al::A, aw::A, disl::Abstr
 
     for k in 1:2, j in 1:2
         sc2 = shared_constants_2(xi[j], et[k], q, sd, cd, kxi[k], ket[j])
-        ua(dua, sc1, sc2, xi[j], et[k], q, disl)
+        ua(dua, sc1, sc2, xi[j], et[k], q, disl1, disl2, disl3)
         for i = 1:3:10
             du[i] = -dua[i]
             du[i + 1] = -dua[i + 1] * cd + dua[i + 2] * sd
@@ -207,8 +212,8 @@ function dc3d(x::T, y::T, z::T, α::T, dep::T, dip::T, al::A, aw::A, disl::Abstr
     d = dep - z
     p = y * cd + d * sd
     q = y * sd - d * cd
-    et[1] = p - aw[1]
-    et[2] = p - aw[2]
+    et[1] = p - aw1
+    et[2] = p - aw2
 
     if q ≈ zero(T) && ((xi[1] * xi[2] ≤ zero(T) && et[1] * et[2] ≈ zero(T)) ||	(et[1] * et[2] ≤ zero(T) && xi[1] * xi[2] ≈ zero(T)))
         return zerosol
@@ -227,9 +232,9 @@ function dc3d(x::T, y::T, z::T, α::T, dep::T, dip::T, al::A, aw::A, disl::Abstr
 
     for k in 1:2, j in 1:2
         sc2 = shared_constants_2(xi[j], et[k], q, sd, cd, kxi[k], ket[j])
-        ua(dua, sc1, sc2, xi[j], et[k], q, disl)
-        ub(dub, sc1, sc2, xi[j], et[k], q, disl)
-        uc(duc, sc1, sc2, xi[j], et[k], q, z, disl)
+        ua(dua, sc1, sc2, xi[j], et[k], q, disl1, disl2, disl3)
+        ub(dub, sc1, sc2, xi[j], et[k], q, disl1, disl2, disl3)
+        uc(duc, sc1, sc2, xi[j], et[k], q, z, disl1, disl2, disl3)
         for i = 1:3:10
             du[i] = dua[i] + dub[i] + z * duc[i]
             du[i + 1] = (dua[i + 1] + dub[i + 1] + z * duc[i + 1]) * cd - (dua[i + 2] + dub[i + 2] + z * duc[i + 2]) * sd
@@ -247,8 +252,8 @@ function dc3d(x::T, y::T, z::T, α::T, dep::T, dip::T, al::A, aw::A, disl::Abstr
     return u
 end
 
-@inline function ua(u::A, sc1::B1, sc2::B2, xi::T, et::T, q::T, disl::A
-    ) where {T <: Number,A <: AbstractArray{T},B1 <: NTuple{12,T},B2 <: NTuple{24,T}}
+@inline function ua(u::A, sc1::B1, sc2::B2, xi::T, et::T, q::T, disl1::T, disl2::T, disl3::T,
+    ) where {T <: Number, A <: AbstractArray{T}, B1 <: NTuple{12,T}, B2 <: NTuple{24,T}}
     alp1, alp2, alp3, alp4, alp5, sd, cd, sdsd, cdcd, sdcd, s2d, sc2d = sc1
     xi2, et2, q2, r, r2, r3, r5, y, d, tt, alx, ale, x11, y11, x32, y32, ey, ez, fy, fz, gy, gz, hy, hz = sc2
 
@@ -257,7 +262,7 @@ end
     qx = q * x11
     qy = q * y11
 
-    coeff = disl[1] / 2π
+    coeff = disl1 / 2π
     u[1]  += coeff * (tt / 2 + alp2 * xi * qy)
     u[2]  += coeff * (alp2 * q / r)
     u[3]  += coeff * (alp1 * ale - alp2 * q * qy)
@@ -271,7 +276,7 @@ end
     u[11] += coeff * (alp2 * ez)
     u[12] += coeff * (-alp1 * (sd / r - qy * cd) - alp2 * q * fz)
 
-    coeff = disl[2] / 2π
+    coeff = disl2 / 2π
     u[1]  += coeff * (alp2 * q / r)
     u[2]  += coeff * (tt / 2 + alp2 * et * qx)
     u[3]  += coeff * (alp1 * alx - alp2 * q * qx)
@@ -285,7 +290,7 @@ end
     u[11] += coeff * (alp1 * y * x11 + xy / 2 * cd + alp2 * et * gz)
     u[12] += coeff * (-alp1 * d * x11 - alp2 * q * gz)
 
-    coeff = disl[3] / 2π
+    coeff = disl3 / 2π
     u[1]  += coeff * (-alp1 * ale - alp2 * q * qy)
     u[2]  += coeff * (-alp1 * alx - alp2 * q * qx)
     u[3]  += coeff * (tt / 2 - alp2 * (et * qx + xi * qy))
@@ -300,7 +305,7 @@ end
     u[12] += coeff * (alp1 * (y * x11 + xy * cd) + alp2 * q * hz)
 end
 
-@inline function ub(u::A, sc1::B1, sc2::B2, xi::T, et::T, q::T, disl::A
+@inline function ub(u::A, sc1::B1, sc2::B2, xi::T, et::T, q::T, disl1::T, disl2::T, disl3::T,
     ) where {T <: Number,A <: AbstractArray{T},B1 <: NTuple{12,T},B2 <: NTuple{24,T}}
     alp1, alp2, alp3, alp4, alp5, sd, cd, sdsd, cdcd, sdcd, s2d, sc2d = sc1
     xi2, et2, q2, r, r2, r3, r5, y, d, tt, alx, ale, x11, y11, x32, y32, ey, ez, fy, fz, gy, gz, hy, hz = sc2
@@ -343,7 +348,7 @@ end
     qx = q * x11
     qy = q * y11
 
-    coeff = disl[1] / 2π
+    coeff = disl1 / 2π
     u[1]  += coeff * (-xi * qy - tt - alp3 * ai1 * sd)
     u[2]  += coeff * (-q / r + alp3 * y / rd * sd)
     u[3]  += coeff * (q * qy - alp3 * ai2 * sd)
@@ -357,7 +362,7 @@ end
     u[11] += coeff * (-ez + alp3 * y * d11 * sd)
     u[12] += coeff * (q * fz + alp3 * ak2 * sd)
 
-    coeff = disl[2] / 2π
+    coeff = disl2 / 2π
     u[1]  += coeff * (-q / r + alp3 * ai3 * sdcd)
     u[2]  += coeff * (-et * qx - tt - alp3 * xi / rd * sdcd)
     u[3]  += coeff * (q * qx + alp3 * ai4 * sdcd)
@@ -371,7 +376,7 @@ end
     u[11] += coeff * (-et * gz - xy * cd - alp3 * xi * d11 * sdcd)
     u[12] += coeff * (q * gz - alp3 * ak4 * sdcd)
 
-    coeff = disl[3] / 2π
+    coeff = disl3 / 2π
     u[1]  += coeff * (q * qy - alp3 * ai3 * sdsd)
     u[2]  += coeff * (q * qx + alp3 * xi / rd * sdsd)
     u[3]  += coeff * (et * qx + xi * qy - tt - alp3 * ai4 * sdsd)
@@ -387,7 +392,7 @@ end
 end
 
 
-@inline function uc(u::A, sc1::B1, sc2::B2, xi::T, et::T, q::T, z::T, disl::A
+@inline function uc(u::A, sc1::B1, sc2::B2, xi::T, et::T, q::T, z::T, disl1::T, disl2::T, disl3::T,
     ) where {T <: Number,A <: AbstractArray{T},B1 <: NTuple{12,T},B2 <: NTuple{24,T}}
     alp1, alp2, alp3, alp4, alp5, sd, cd, sdsd, cdcd, sdcd, s2d, sc2d = sc1
     xi2, et2, q2, r, r2, r3, r5, y, d, tt, alx, ale, x11, y11, x32, y32, ey, ez, fy, fz, gy, gz, hy, hz = sc2
@@ -414,7 +419,7 @@ end
     cdr = (c + d) / r3
     yy0 = y / r3 - y0 * cd
 
-    coeff = disl[1] / 2π
+    coeff = disl1 / 2π
     u[1]  += coeff * (alp4 * xy * cd - alp5 * xi * q * z32)
     u[2]  += coeff * (alp4 * (cd / r + 2 * qy * sd) - alp5 * c * q / r3)
     u[3]  += coeff * (alp4 * qy * cd - alp5 * (c * et / r3 - z * y11 + xi2 * z32))
@@ -428,7 +433,7 @@ end
     u[11] += coeff * (alp4 * 2 * (y / r3 - y0 * cd) * sd + d / r3 * cd - alp5 * (cdr * cd + c * d * qr))
     u[12] += coeff * (yy0 * cd - alp5 * (cdr * sd - c * y * qr - y0 * sdsd + q * z0 * cd))
 
-    coeff = disl[2] / 2π
+    coeff = disl2 / 2π
     u[1]  += coeff * (alp4 * cd / r - qy * sd - alp5 * c * q / r3)
     u[2]  += coeff * (alp4 * y * x11 - alp5 * c * et * q * x32)
     u[3]  += coeff * (-d * x11 - xy * sd - alp5 * c * (x11 - q2 * x32))
@@ -442,7 +447,7 @@ end
     u[11] += coeff * (alp4 * y * d * x32 - alp5 * c * ((y - 2 * q * sd) * x32 + d * et * q * x53))
     u[12] += coeff * (-xi * ppz * sd + x11 - d * d * x32 - alp5 * c * ((d - 2 * q * cd) * x32 - d * q2 * x53))
 
-    coeff = disl[3] / 2π
+    coeff = disl3 / 2π
     u[1]  += coeff * (-alp4 * (sd / r + qy * cd) - alp5 * (z * y11 - q2 * z32))
     u[2]  += coeff * (alp4 * 2 * xy * sd + d * x11 - alp5 * c * (x11 - q2 * x32))
     u[3]  += coeff * (alp4 * (y * x11 + xy * cd) + alp5 * q * (c * et * x32 + xi * z32))
