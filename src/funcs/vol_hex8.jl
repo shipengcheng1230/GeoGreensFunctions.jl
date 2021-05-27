@@ -178,9 +178,10 @@ function _disp_vol_hex8!(u::AbstractVector{R},
 
     lambda = G * 2 * nu / (1 - 2 * nu)
     epsvkk = epsv11p + epsv22p + epsv33p
+    sintheta, costheta = sincosd(theta)
 
-    t1 = (x1 - q1) * cosd(theta) + (x2 - q2) * sind(theta)
-    x2 = -(x1 - q1) * sind(theta) + (x2 - q2) * cosd(theta)
+    t1 = (x1 - q1) * costheta + (x2 - q2) * sintheta
+    x2 = -(x1 - q1) * sintheta + (x2 - q2) * costheta
     x1 = t1
 
     # https://github.com/JuliaLang/julia/issues/15276
@@ -558,8 +559,8 @@ function _disp_vol_hex8!(u::AbstractVector{R},
             (IU3(L, T / 2, q3 + W) - IU3(L, -T / 2, q3 + W) + IU3(L, -T / 2, q3) - IU3(L, T / 2, q3)
             -IU3(zero(R), T / 2, q3 + W) + IU3(zero(R), -T / 2, q3 + W) - IU3(zero(R), -T / 2, q3) + IU3(zero(R), T / 2, q3))
 
-        t1 = u[1] * cosd(theta) - u[2] * sind(theta)
-        u[2] = u[1] * sind(theta) + u[2] * cosd(theta)
+        t1 = u[1] * costheta - u[2] * sintheta
+        u[2] = u[1] * sintheta + u[2] * costheta
         u[1] = t1
 
         return nothing
@@ -575,9 +576,10 @@ function _strain_vol_hex8!(ϵ::AbstractVector{R},
 
     lambda = G * 2 * nu / (1 - 2 * nu)
     epsvkk = epsv11p + epsv22p + epsv33p
+    sintheta, costheta = sincosd(theta)
 
-    t1 = (x1 - q1) * cosd(theta) + (x2 - q2) * sind(theta)
-    x2 = -(x1 - q1) * sind(theta) + (x2 - q2) * cosd(theta)
+    t1 = (x1 - q1) * costheta + (x2 - q2) * sintheta
+    x2 = -(x1 - q1) * sintheta + (x2 - q2) * costheta
     x1 = t1
 
     # https://github com/JuliaLang/julia/issues/15276
@@ -3082,17 +3084,17 @@ function _strain_vol_hex8!(ϵ::AbstractVector{R},
         e13p = (u13 + u31) / 2
         e23p = (u23 + u32) / 2
 
-        e11 = (cosd(theta) * e11p - sind(theta) * e12p) * cosd(theta) - (cosd(theta) * e12p - sind(theta) * e22p) * sind(theta)
-        e12 = (cosd(theta) * e11p - sind(theta) * e12p) * sind(theta) + (cosd(theta) * e12p - sind(theta) * e22p) * cosd(theta)
-        e13 = cosd(theta) * e13p - sind(theta) * e23p
-        e22 = (sind(theta) * e11p + cosd(theta) * e12p) * sind(theta) + (sind(theta) * e12p + cosd(theta) * e22p) * cosd(theta)
-        e23 = sind(theta) * e13p + cosd(theta) * e23p
+        e11 = (costheta * e11p - sintheta * e12p) * costheta - (costheta * e12p - sintheta * e22p) * sintheta
+        e12 = (costheta * e11p - sintheta * e12p) * sintheta + (costheta * e12p - sintheta * e22p) * costheta
+        e13 = costheta * e13p - sintheta * e23p
+        e22 = (sintheta * e11p + costheta * e12p) * sintheta + (sintheta * e12p + costheta * e22p) * costheta
+        e23 = sintheta * e13p + costheta * e23p
 
-        epsv11 = (cosd(theta) * epsv11p - sind(theta) * epsv12p) * cosd(theta) - (cosd(theta) * epsv12p - sind(theta) * epsv22p) * sind(theta)
-        epsv12 = (cosd(theta) * epsv11p - sind(theta) * epsv12p) * sind(theta) + (cosd(theta) * epsv12p - sind(theta) * epsv22p) * cosd(theta)
-        epsv13 = cosd(theta) * epsv13p - sind(theta) * epsv23p
-        epsv22 = (sind(theta) * epsv11p + cosd(theta) * epsv12p) * sind(theta) + (sind(theta) * epsv12p + cosd(theta) * epsv22p) * cosd(theta)
-        epsv23 = sind(theta) * epsv13p + cosd(theta) * epsv23p
+        epsv11 = (costheta * epsv11p - sintheta * epsv12p) * costheta - (costheta * epsv12p - sintheta * epsv22p) * sintheta
+        epsv12 = (costheta * epsv11p - sintheta * epsv12p) * sintheta + (costheta * epsv12p - sintheta * epsv22p) * costheta
+        epsv13 = costheta * epsv13p - sintheta * epsv23p
+        epsv22 = (sintheta * epsv11p + costheta * epsv12p) * sintheta + (sintheta * epsv12p + costheta * epsv22p) * costheta
+        epsv23 = sintheta * epsv13p + costheta * epsv23p
         epsv33 = epsv33p
 
         ϵ[1] = e11 - epsv11 * S(x1 / L) * omega(x2 / T) * S((x3 - q3) / W)

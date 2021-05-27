@@ -128,9 +128,9 @@ end
     return Txx2, Tyy2, Tzz2, Txy2, Txz2, Tyz2
 end
 
-heaviside(x::T) where T = x ≤ zero(T) ? zero(T) : one(T)
+heaviside(x::T) where T = ifelse(x ≤ zero(T), zero(T), one(T))
 
-xlogy(x::T, y::T) where T = isapprox(x, zero(T)) ? zero(T) : x * log(y)
+xlogy(x::T, y::T) where T = ifelse(isapprox(x, zero(T)), zero(T), x * log(y))
 
 xlogy(x, y) = xlogy(promote(x, y)...)
 
